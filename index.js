@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config.js';
 
 import errorHandler from './middlewares/errorHandler.js'; //custom error handling
+
 //import routers
 // import someRouter from './routes/someRouter.js';
 
