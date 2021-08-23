@@ -1,0 +1,42 @@
+{
+  "name": "my-great-deals",
+  "version": "0.0.1",
+  "description": "Web based platform to buy and sell things",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EKjs/mygreatdeals.git"
+  },
+  "keywords": [
+    "sell",
+    "buy",
+    "deal",
+    "deals",
+    "farmer",
+    "buylocal",
+    "products",
+    "cars",
+    "property",
+    "electronics"
+  ],
+  "author": "Eduard-K",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EKjs/mygreatdeals/issues"
+  },
+  "homepage": "https://github.com/EKjs/mygreatdeals#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "kill-port": "^1.6.1",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.12"
+  }
+}
