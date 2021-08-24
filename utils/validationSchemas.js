@@ -32,29 +32,41 @@ const validateWithJoi = (reqData,reqType)=>{
         };
         break;
 
-
-
-
-      case "createCity":
+      case "createUserType":
         schema = {
-          cityName: Joi.string().min(2).required(),
-          regionId: Joi.number().required(),
+            userType: Joi.string().min(1).required(),
         };
         break;
-      case "updateCity":
+        
+        case "createUserRating":
         schema = {
-          cityName: Joi.string().min(2).required(),
-          regionId: Joi.number().required(),
+          targetUser: Joi.number().required(),
+          rating: Joi.number().required(),
         };
         break;
-      case "createDuration":
+
+      case "createStore":
         schema = {
-          durationText: Joi.string().min(2).required(),
+            title: Joi.string().min(1).required(),
+            adminId: Joi.number().required(),
+            address: Joi.string().min(2).required(),
+            description: Joi.string(),
+            photo: Joi.string(),
+            coords: Joi.array(),
         };
         break;
-      case "updateDuration":
+
+
+      case "createUser":
         schema = {
-          durationText: Joi.string().min(2).required(),
+            userName: Joi.string().min(4).required(),
+            email: Joi.string().min(2).required().email(),
+            pwdHash: Joi.string().min(2).required(),
+            phone: Joi.string(),
+            registerDate: Joi.date(),
+            wasOnline: Joi.date(),
+            userType: Joi.number().required(),
+            storeId: Joi.number().required(),
         };
         break;
       case "createRegion":

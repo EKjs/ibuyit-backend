@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllUserTypes, getOneUserType, createUserType, updateUserType, deleteUserType } from '../controllers/usertypes.js';
+import { getAllUserTypes, getOneUserType, createUserType, updateUserType, deleteUserType } from '../controllers/userTypes.js';
 
 const userTypeRouter = Router();
 
