@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config.js';
+// import { dirname, join } from 'path';
+// import { fileURLToPath } from 'url';
 
 import errorHandler from './middlewares/errorHandler.js'; //custom error handling
 
@@ -9,6 +11,9 @@ import errorHandler from './middlewares/errorHandler.js'; //custom error handlin
 
 const app=express();
 const port = process.env.PORT || 3000;
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 
 if (process.env.NODE_ENV !== 'production') {
     const morgan = await import('morgan');
