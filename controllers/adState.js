@@ -3,7 +3,7 @@ import validateWithJoi from "../utils/validationSchemas.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 
-export const getAllAdState = asyncHandler(async (req, res) => {
+export const getAllAdStates = asyncHandler(async (req, res) => {
   const runQuery = `SELECT * FROM adstatetype ORDER BY id`;
   const {rows} = await pool.query(runQuery);
   res.status(200).json(rows);
