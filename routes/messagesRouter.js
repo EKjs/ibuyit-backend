@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllMessages, getAllRecievedMessagesOfUser, getAllSentMessagesOfUser, getOneMessage, createMessage, updateMessage, deleteMessage } from '../controllers/messages.js';
+import { getAllMessages, getAllRecievedMessagesOfUser, getAllSentMessagesOfUser, getOneMessage, deleteMessage } from '../controllers/messages.js';
 import verifyUser from "../middlewares/verifyUser.js";
 
 const messagesRouter = Router();

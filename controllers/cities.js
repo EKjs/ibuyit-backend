@@ -4,7 +4,16 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 
 export const getAllCities = asyncHandler(async (req, res) => {
-  const runQuery = `SELECT postal_code AS "postalCode",name,county,state,coords FROM cities ORDER BY id`;
+  const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
+  const limit = req.query.limit ? parseInt(req.query.limit,10) : 0;
+  //Check for bad LIMIT or SKIP values
+  if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
+  else if (!Number.isInteger(limit))throw new ErrorResponse('Bad limit value',400);
+
+  let runQuery = `SELECT postal_code AS "postalCode",name,county,state,coords,count(*) OVER() AS "totalRows"  FROM cities ORDER BY id`;
+  if (limit>0)runQuery+=` LIMIT ${limit}`;
+  if (skip>0)runQuery+=` OFFSET ${skip}`;
+  console.log();
   const { rows } = await pool.query(runQuery);
   res.status(200).json(rows);
 });

@@ -14,7 +14,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
 
     //const totalRows = await pool.query(`SELECT COUNT(*) FROM ads`);
   
-    const runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
+    let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
     ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
     ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
     u.name AS "userName", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subcategory", count(*) OVER() AS "totalRows" 
@@ -45,7 +45,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
     //const totalRows = await pool.query(`SELECT COUNT(*) FROM ads WHERE ads.owner_id=$1`,[adsByUserId]);
     //if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
     
-    const runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
+    let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
     ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
     ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
     u.name AS "userName", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subcategory", count(*) OVER() AS "totalRows" 
@@ -74,7 +74,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
 
     const totalRows = await pool.query(`SELECT COUNT(*) FROM ads`);
   
-    const runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
+    let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
     ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
     ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
     u.name AS "userName", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subcategory", count(*) OVER() AS "totalRows" 

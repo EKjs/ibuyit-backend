@@ -104,12 +104,13 @@ const validateWithJoi = (reqData,reqType)=>{
 
 
 
-      case "createSubCategory":
+      case "changeAdState":
         schema = {
-          subCategoryName: Joi.string().min(2).required(),
-          catId: Joi.number().required(),
+          adNewStateId: Joi.number().required(),
         };
         break;
+
+
       case "updateSubCategory":
         schema = {
           subCategoryName: Joi.string().min(2).required(),

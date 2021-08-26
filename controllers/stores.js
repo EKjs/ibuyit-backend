@@ -7,7 +7,7 @@ export const getAllStores = asyncHandler(async (req, res) => {
   const runQuery = `SELECT s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, s.description, s.photo, s.coords 
   FROM stores AS s
   JOIN users AS u ON s.admin_id=u.id
-  ORDER BY id`;
+  ORDER BY s.id`;
   const {rows} = await pool.query(runQuery);
   res.status(200).json(rows);
 });
@@ -19,7 +19,7 @@ export const getOneStore = asyncHandler(async (req, res) => {
   const runQuery = `SELECT s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, s.description, s.photo, s.coords 
   FROM stores AS s
   JOIN users AS u ON s.admin_id=u.id 
-  WHERE id=$1`;
+  WHERE s.id=$1`;
 
   const { rowCount, rows } = await pool.query(runQuery, [storeId]);
   if (rowCount === 0) throw new ErrorResponse("Id not found", 404);
