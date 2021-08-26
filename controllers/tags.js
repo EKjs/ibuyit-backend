@@ -21,6 +21,7 @@ export const getOneTag = asyncHandler(async (req, res) => {
 });
 
 export const createTag = asyncHandler(async (req, res) => {
+  if(req.user.userType!==999)throw new ErrorResponse("You don't have permissions!", 400); //only admin allowed to createTag
   const { error } = validateWithJoi(req.body, "createTag");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
   const { tag } = req.body;
@@ -31,6 +32,7 @@ export const createTag = asyncHandler(async (req, res) => {
 });
 
 export const updateTag = asyncHandler(async (req, res) => {
+  if(req.user.userType!==999)throw new ErrorResponse("You don't have permissions!", 400); //only admin allowed to updateTag
   const { error } = validateWithJoi(req.body, "createTag");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
   const tagId = parseInt(req.params.id);
@@ -43,6 +45,7 @@ export const updateTag = asyncHandler(async (req, res) => {
 });
 
 export const deleteTag = asyncHandler(async (req, res) => {
+  if(req.user.userType!==999)throw new ErrorResponse("You don't have permissions!", 400); //only admin allowed to deleteTag
   const tagId = parseInt(req.params.id);
   if (!Number.isInteger(tagId))
     throw new ErrorResponse("Bad request", 400);

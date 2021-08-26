@@ -6,7 +6,7 @@ import ErrorResponse from "../utils/ErrorResponse.js";
 //getAvgRatingOfUser, createUserRating, getUsersRatings
 
 export const getUsersRatings = asyncHandler(async (req, res) => {
-  const userId = parseInt(req.params.id); //TODO: GET IT FROM TOKEN!!!
+  const userId = req.user.userId; //GET my id FROM TOKEN!!!
   if (!Number.isInteger(userId))
     throw new ErrorResponse("Bad request", 400);
   const runQuery = `SELECT r.target_user_id, r.rated, u.name 
@@ -20,7 +20,7 @@ export const getUsersRatings = asyncHandler(async (req, res) => {
 });
 
 export const getAvgRatingOfUser = asyncHandler(async (req, res) => {
-  const userId = parseInt(req.params.id); //TODO: GET IT FROM TOKEN!!!
+  const userId = parseInt(req.params.id); //all users can see other user's avg rating
   if (!Number.isInteger(userId))
     throw new ErrorResponse("Bad request", 400);
   const runQuery = `SELECT AVG(rated)::numeric(10,2) 
@@ -33,7 +33,7 @@ export const getAvgRatingOfUser = asyncHandler(async (req, res) => {
 });
 
 export const createUserRating = asyncHandler(async (req, res) => {
-  const userId = parseInt(req.params.id); //TODO: GET IT FROM TOKEN!!!
+  const userId = req.user.userId; //GET my id FROM TOKEN!!!
   if (!Number.isInteger(userId))
     throw new ErrorResponse("Bad request", 400);
   const { error } = validateWithJoi(req.body, "createUserRating");

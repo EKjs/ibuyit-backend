@@ -5,11 +5,15 @@ const validateWithJoi = (reqData,reqType)=>{
     switch (reqType) {
       case "createCategory":
         schema = {
-          parentId: Joi.number().required().default(1),
-          category: Joi.string(1).required(),
+          category: Joi.string().required(),
         };
         break;
-
+        case "createSubCategory":
+          schema = {
+            parentId: Joi.number().required(),
+            subCategory: Joi.string().required(),
+          };
+          break;
       case "createTag":
         schema = {
           tag: Joi.string().required(),
@@ -48,7 +52,7 @@ const validateWithJoi = (reqData,reqType)=>{
       case "createStore":
         schema = {
             title: Joi.string().min(1).required(),
-            adminId: Joi.number().required(),
+            /* adminId: Joi.number().required(), */
             address: Joi.string().min(2).required(),
             description: Joi.string(),
             photo: Joi.string(),
@@ -61,24 +65,45 @@ const validateWithJoi = (reqData,reqType)=>{
         schema = {
             userName: Joi.string().min(4).required(),
             email: Joi.string().min(2).required().email(),
-            pwdHash: Joi.string().min(2).required(),
+            password: Joi.string().min(8).required(),
             phone: Joi.string(),
-            registerDate: Joi.date(),
+  /*          registerDate: Joi.date(),
             wasOnline: Joi.date(),
-            userType: Joi.number().required(),
-            storeId: Joi.number().required(),
+             userType: Joi.number().required(),
+            storeId: Joi.number().required(), */
         };
         break;
-      case "createRegion":
+      case "createAd":
         schema = {
-          regionName: Joi.string().min(2).required(),
+            storeId: Joi.number().allow(null),
+            subCategoryId: Joi.number().required(),
+            title: Joi.string().min(10).required(),
+            description: Joi.string(),
+            price: Joi.number().default(0),
+            photos: Joi.array(),
+            cityId: Joi.number().required(),
+            address: Joi.string(),
+            coords: Joi.array(),
+            currentState:Joi.number(),
         };
         break;
-      case "updateRegion":
+
+
+      case "addFavUser":
         schema = {
-          regionName: Joi.string().min(2).required(),
+          favUserId: Joi.number().required(),
+          description: Joi.string(),
         };
         break;
+        case "addFavAd":
+          schema = {
+            favAdId: Joi.number().required(),
+            description: Joi.string(),
+          };
+          break;
+
+
+
       case "createSubCategory":
         schema = {
           subCategoryName: Joi.string().min(2).required(),

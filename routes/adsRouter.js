@@ -1,12 +1,16 @@
 import { Router } from "express";
-import { getAllAds, getOneAd, createAd, updateAd, deleteAd } from '../controllers/ads.js';
+import { getAllAds, getNewAds, getAdsByUserId, getOneAd, createAd, updateAd, deleteAd } from '../controllers/ads.js';
+import verifyUser from "../middlewares/verifyUser.js";
 
 const adsRouter = Router();
 
 adsRouter.get('/', getAllAds); //?skip=0&limit=10
+adsRouter.get('/new/:count', getNewAds);
+adsRouter.get('/byuser/:userId', getAdsByUserId);
+
 adsRouter.get('/:id', getOneAd);
-adsRouter.post('/', createAd);
-adsRouter.put('/:id', updateAd);
-adsRouter.delete('/:id', deleteAd);
+adsRouter.post('/', verifyUser, createAd);
+adsRouter.put('/:id', verifyUser, updateAd);
+adsRouter.delete('/:id', verifyUser, deleteAd);
 
 export default adsRouter;

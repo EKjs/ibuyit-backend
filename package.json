@@ -32,9 +32,12 @@
   },
   "homepage": "https://github.com/EKjs/mygreatdeals#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "joi": "^17.4.2",
+    "jsonwebtoken": "^8.5.1",
     "kill-port": "^1.6.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.3",

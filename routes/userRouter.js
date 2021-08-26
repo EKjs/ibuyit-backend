@@ -1,12 +1,15 @@
 import { Router } from "express";
-import { getAllUsers, getOneUser, createUser, updateUser, deleteUser } from '../controllers/users.js';
+import { getAllUsers, getOneUser, createUser, updateUser, deleteUser, signIn } from '../controllers/users.js';
+import verifyUser from "../middlewares/verifyUser.js";
 
 const userRouter = Router();
 
-userRouter.get('/', getAllUsers); //?skip=0&limit=10
+userRouter.post('/signin',signIn);
+userRouter.get('/', verifyUser, getAllUsers); //?skip=0&limit=10
 userRouter.get('/:id', getOneUser);
-userRouter.post('/', createUser); //add admin's middleware
-userRouter.put('/:id', updateUser); //add admin's middleware
-userRouter.delete('/:id', deleteUser); //add admin's middleware
+//TODO ! userRouter.get('/:id/ads', getUsersAds);
+userRouter.post('/', createUser); 
+userRouter.put('/:id', verifyUser, updateUser);
+userRouter.delete('/:id', verifyUser, deleteUser);
 
 export default userRouter;

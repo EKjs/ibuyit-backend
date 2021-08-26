@@ -4,7 +4,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 
 export const getAllCities = asyncHandler(async (req, res) => {
-  const runQuery = `SELECT * FROM cities ORDER BY id`;
+  const runQuery = `SELECT postal_code AS "postalCode",name,county,state,coords FROM cities ORDER BY id`;
   const { rows } = await pool.query(runQuery);
   res.status(200).json(rows);
 });
@@ -12,7 +12,7 @@ export const getAllCities = asyncHandler(async (req, res) => {
 export const getOneCity = asyncHandler(async (req, res) => {
   const cityId = parseInt(req.params.id);
   if (!Number.isInteger(cityId)) throw new ErrorResponse("Bad request", 400);
-  const runQuery = "SELECT * FROM cities WHERE id=$1";
+  const runQuery = `SELECT postal_code AS "postalCode",name,county,state,coords FROM cities WHERE id=$1`;
 
   const { rowCount, rows } = await pool.query(runQuery, [cityId]);
   if (rowCount === 0) throw new ErrorResponse("Id not found", 404);
@@ -24,7 +24,7 @@ export const createCity = asyncHandler(async (req, res) => {
   if (error) throw new ErrorResponse(error.details[0].message, 400);
   const { postalCode, name, county, state, coords } = req.body;
   const runQuery =
-    "INSERT INTO cities (postal_code,name,county,state,coords) VALUES ($1,$2,$3,$4,$5) RETURNING *";
+    `INSERT INTO cities (postal_code,name,county,state,coords) VALUES ($1,$2,$3,$4,$5) RETURNING id, postal_code AS "postalCode",name,county,state,coords`;
   const { rows } = await pool.query(runQuery, [
     postalCode,
     name,
@@ -43,7 +43,7 @@ export const updateCity = asyncHandler(async (req, res) => {
   if (!Number.isInteger(cityId)) throw new ErrorResponse("Bad request", 400);
   const { postalCode, name, county, state, coords } = req.body;
   const runQuery =
-    "UPDATE ONLY cities SET postal_code=$1, name=$2, county=$3, state=$4, coords=$5,  WHERE id=$6 RETURNING *";
+    `UPDATE ONLY cities SET postal_code=$1, name=$2, county=$3, state=$4, coords=$5,  WHERE id=$6 RETURNING id,postal_code AS "postalCode",name,county,state,coords;`;
   const { rows } = await pool.query(runQuery, [
     postalCode,
     name,
@@ -58,7 +58,7 @@ export const updateCity = asyncHandler(async (req, res) => {
 export const deleteCity = asyncHandler(async (req, res) => {
   const cityId = parseInt(req.params.id);
   if (!Number.isInteger(cityId)) throw new ErrorResponse("Bad request", 400);
-  const runQuery = "DELETE FROM ONLY cities WHERE id=$1 RETURNING *";
+  const runQuery = `DELETE FROM ONLY cities WHERE id=$1 RETURNING id,postal_code AS "postalCode",name,county,state,coords;`;
   const { rows } = await pool.query(runQuery, [cityId]);
   res.status(200).json(rows[0]);
 });
