@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { searchAds } from '../controllers/search.js';
+import { searchAds,plzOrCityFinder } from '../controllers/search.js';
 
 const searchRouter = Router();
 
 searchRouter.post('/', searchAds);
+searchRouter.post('/plzorcity', plzOrCityFinder);
 
 export default searchRouter;

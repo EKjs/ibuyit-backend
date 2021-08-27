@@ -1,15 +1,18 @@
 import pool from '../db/pgPool.js';
-import sanitizeHtml from 'sanitize-html';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import ErrorResponse from '../utils/ErrorResponse.js';
-import axios from 'axios';
 
 export const searchAds = asyncHandler(async (req, res) => {
-  let { cityOrZip, distance, userSearchQuery} = req.body;
-  if (!cityOrZip && !distance && !userSearchQuery)return res.status(200).json([]);
-  cityOrZip = sanitizeHtml(cityOrZip);
-  userSearchQuery = sanitizeHtml(userSearchQuery);
-  console.log(cityOrZip, distance, userSearchQuery);
+  const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
+  const limit = req.query.limit ? parseInt(req.query.limit,10) : 0;
+  
+  //Check for bad LIMIT or SKIP values
+  if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
+  else if (!Number.isInteger(limit))throw new ErrorResponse('Bad limit value',400);
+
+  let { cityOrPlz, distance, userSearchQuery} = req.body;
+  if (!cityOrPlz && !userSearchQuery)return res.status(200).json([]);
+
   let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
   ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
   ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
@@ -18,46 +21,66 @@ export const searchAds = asyncHandler(async (req, res) => {
   JOIN cities ON ads.city_id=cities.id 
   JOIN users AS u ON ads.owner_id=u.id 
   JOIN subcategories AS sc ON ads.subcategory_id=sc.id 
-  LEFT JOIN stores AS s ON u.store_id=s.id 
-  WHERE (ads.title ILIKE $1 OR ads.description ILIKE $1) `;
-  const endQuery = `ORDER BY ads.created DESC`;
-  const arrayToDb=[`%${userSearchQuery}%`];
+  LEFT JOIN stores AS s ON u.store_id=s.id `;
+  const arrayToDb=[];
+  if (userSearchQuery){
+    runQuery+= ` WHERE (ads.title ILIKE $1 OR ads.description ILIKE $1) `;
+    arrayToDb.push(`%${userSearchQuery}%`);
+  }else{
+    runQuery+= ` WHERE `;
+  };
+  let endQuery = `ORDER BY ads.created DESC`;
+  if (limit>0)endQuery+=` LIMIT ${limit}`;
+  if (skip>0)endQuery+=` OFFSET ${skip}`;
 
-  if (cityOrZip){
+  if (cityOrPlz){
     console.log('city present');
     let query;
-    if (Number.isInteger(parseInt(cityOrZip),10)){ //if it is postal code
+    if (Number.isInteger(parseInt(cityOrPlz),10)){ //if it is postal code
       query=`SELECT name, id, coords FROM cities WHERE postal_code=$1;`;
     }else{
       query=`SELECT name, id, coords FROM cities WHERE name=$1;`;
     }
-    const { rows } = await pool.query(query,[cityOrZip]);
+    const { rows } = await pool.query(query,[cityOrPlz]);
     if (rows.length<1)throw new ErrorResponse('City not found!',404); //city deleted???
 
     if (!distance){
-      console.log('no distance');
-      runQuery+=`AND ads.city_id = $2 `;
+      runQuery+= userSearchQuery ? ` AND ads.city_id = $2 ` : ` ads.city_id = $1 `;
       arrayToDb.push(rows[0].id)
     }else{
-      console.log('distance present');
-      const correctDistance = distance>0 && distance<100 ? distance * 1000 : 1000;
-      console.log(correctDistance);
+      const correctDistance = distance>0 && distance<100 ? distance : 1;
       const closeCitiesIds = await getCitiesInRadius(rows[0].coords[0],rows[0].coords[1],correctDistance);
-
-      runQuery+=`AND ads.city_id = ANY($2::INT[]) `;
+      runQuery+=userSearchQuery ? ` AND ads.city_id = ANY($2::INT[]) ` : ` ads.city_id = ANY($1::INT[]) `;
       arrayToDb.push(closeCitiesIds)
     }
   }
-  console.log('final query=',runQuery+endQuery);
-  console.log('array=',arrayToDb);
   const { rows:searchResult } = await pool.query(runQuery+endQuery,arrayToDb);
   return res.status(200).json(searchResult);
 });
 
 
 const getCitiesInRadius = async (lat,lon,radius) => {
-  const URL=`https://reverse.geocoder.ls.hereapi.com/6.2/reversegeocode.json?apiKey=${process.env.HEREAPI_KEY}&mode=retrieveAreas&level=city&gen=9&maxresults=30&prox=${lat},${lon},${radius}`;
-  const {data} = await axios.get(URL);
-  const closeCitiesIds = data.Response.View[0].Result.map(city=>parseInt(city.Location.MapReference.CityId,10));
+  let query=`SELECT id,name, coords FROM cities`;
+  const { rows } = await pool.query(query);
+  if (rows.length<1)throw new ErrorResponse('City not found!',404); //city deleted???
+  const closeCities = rows.filter(city=>distance(lat,lon,city.coords[0],city.coords[1])<radius);
+  const closeCitiesIds = closeCities.map(city=>city.id);
   return closeCitiesIds
 };
+
+const distance = (lat1, lon1, lat2, lon2) => {
+  //thnx to Salvador Dali https://coderoad.ru/365826/Вычислите-расстояние-между-координатами-2-GPS#34486089
+  const p = 0.017453292519943295;    // Math.PI / 180
+  const c = Math.cos;
+  const a = 0.5 - c((lat2 - lat1) * p)/2 + c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p))/2;
+  return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
+}
+
+
+export const plzOrCityFinder = asyncHandler(async (req, res) => { //function for giving hints for the search string
+  const {searchString} = req.body;
+  if (searchString.length<3)return res.status(200).json(searchString);
+  const query=`SELECT name, id, coords, postal_code AS "postalCode" FROM cities WHERE name ILIKE $1 OR postal_code ILIKE $1 ;`;
+  const { rows } = await pool.query(query,[`%${searchString}%`]);
+  return res.status(200).json(rows);
+});

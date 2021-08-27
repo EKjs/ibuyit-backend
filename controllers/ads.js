@@ -3,6 +3,74 @@ import validateWithJoi from '../utils/validationSchemas.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
 import ErrorResponse from '../utils/ErrorResponse.js';
 
+export const getAdsBySubCatId = asyncHandler(async (req, res) => {
+  const subCatId = parseInt(req.params.subCatId,10);
+  if (!Number.isInteger(subCatId))throw new ErrorResponse('Bad request',400);
+  const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
+  const limit = req.query.limit ? parseInt(req.query.limit,10) : 0;
+  
+  //Check for bad LIMIT or SKIP values
+  if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
+  else if (!Number.isInteger(limit))throw new ErrorResponse('Bad limit value',400);
+
+  //const totalRows = await pool.query(`SELECT COUNT(*) FROM ads`);
+
+  let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
+  ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
+  ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
+  u.name AS "userName", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subcategory",
+  cat.id as "catId", cat.description as "category", 
+  count(*) OVER() AS "totalRows" 
+  FROM ads 
+  JOIN cities ON ads.city_id=cities.id 
+  JOIN users AS u ON ads.owner_id=u.id 
+  JOIN subcategories AS sc ON ads.subcategory_id=sc.id 
+	JOIN categories AS cat ON sc.parent_id=cat.id 
+  LEFT JOIN stores AS s ON u.store_id=s.id 
+  WHERE sc.id=$1 
+  ORDER BY ads.created DESC`;
+  if (limit>0)runQuery+=` LIMIT ${limit}`;
+  if (skip>0)runQuery+=` OFFSET ${skip}`;
+  const { rows } = await pool.query(runQuery,[subCatId]);
+  //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
+  //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
+  res.status(200).json(rows);
+});
+
+export const getAdsByCatId = asyncHandler(async (req, res) => {
+  const catId = parseInt(req.params.catId,10);
+  
+  if (!Number.isInteger(catId))throw new ErrorResponse('Bad request',400);
+
+  const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
+  const limit = req.query.limit ? parseInt(req.query.limit,10) : 0;
+  
+  //Check for bad LIMIT or SKIP values
+  if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
+  else if (!Number.isInteger(limit))throw new ErrorResponse('Bad limit value',400);
+
+  //const totalRows = await pool.query(`SELECT COUNT(*) FROM ads`);
+
+  let runQuery=`SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
+  ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
+  ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
+  u.name AS "userName", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subcategory", cat.id as "catId", cat.description as "category", 
+  count(*) OVER() AS "totalRows" 
+  FROM ads 
+  JOIN cities ON ads.city_id=cities.id 
+  JOIN users AS u ON ads.owner_id=u.id 
+  JOIN subcategories AS sc ON ads.subcategory_id=sc.id 
+  JOIN categories AS cat ON sc.parent_id=cat.id 
+  LEFT JOIN stores AS s ON u.store_id=s.id 
+  WHERE cat.id=$1 
+  ORDER BY ads.created DESC`;
+  if (limit>0)runQuery+=` LIMIT ${limit}`;
+  if (skip>0)runQuery+=` OFFSET ${skip}`;
+  const { rows } = await pool.query(runQuery,[catId]);
+  //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
+  //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
+  res.status(200).json(rows);
+});
 
 export const getAllAds = asyncHandler(async (req, res) => {
     const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
@@ -29,7 +97,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
     const { rows } = await pool.query(runQuery);
     //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
     //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
-    res.status(200).json({ rows });
+    res.status(200).json(rows);
   });
 
   export const getAdsByUserId = asyncHandler(async (req, res) => {
@@ -61,7 +129,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
     const { rows } = await pool.query(runQuery,[adsByUserId]);
     //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
     //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
-    res.status(200).json({ rows });
+    res.status(200).json(rows);
   });
   
   export const getNewAds = asyncHandler(async (req, res) => {
