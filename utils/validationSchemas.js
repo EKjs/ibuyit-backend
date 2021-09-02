@@ -57,6 +57,7 @@ const validateWithJoi = (reqData,reqType)=>{
             description: Joi.string(),
             photo: Joi.string(),
             coords: Joi.array(),
+            cityId: Joi.number().required(),
         };
         break;
 
@@ -66,23 +67,31 @@ const validateWithJoi = (reqData,reqType)=>{
             userName: Joi.string().min(4).required(),
             email: Joi.string().min(2).required().email(),
             password: Joi.string().min(8).required(),
-            phone: Joi.string(),
+            phone: Joi.string().allow(null, ''),
+            passwordConfirm: Joi.string(),
   /*          registerDate: Joi.date(),
             wasOnline: Joi.date(),
              userType: Joi.number().required(),
             storeId: Joi.number().required(), */
         };
         break;
+        case "updateUserNoPassword":
+          schema = {
+              userName: Joi.string().min(4).required(),
+              email: Joi.string().min(2).required().email(),
+              phone: Joi.string().allow(null, ''),
+          };
+          break;
       case "createAd":
         schema = {
-            storeId: Joi.number().allow(null),
+            sellAsStore: Joi.boolean(),   //now getting from req.user
             subCategoryId: Joi.number().required(),
             title: Joi.string().min(10).required(),
-            description: Joi.string(),
-            price: Joi.number().default(0),
-            photos: Joi.array(),
+            description: Joi.string().allow(null),
+            price: Joi.number().allow(null),
+            photos: Joi.array().allow(null),
             cityId: Joi.number().required(),
-            address: Joi.string(),
+            address: Joi.string().allow(''),
             coords: Joi.array(),
             currentState:Joi.number(),
         };

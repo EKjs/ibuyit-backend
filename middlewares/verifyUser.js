@@ -11,6 +11,7 @@ const verifyUser = asyncHandler(async (req,res,next)=>{
     const { userId } = jwt.verify(token, process.env.JWT_SECRET);
     const {rowCount,rows:userExists} = await pool.query(`SELECT id AS "userId", name AS "userName", user_type AS "userType", store_id AS "userStoreId" FROM users WHERE id=$1`,[userId]);
     if (rowCount===0) throw new ErrorResponse('User does not exist', 404);
+    console.log(userExists[0]);
     req.user = userExists[0];//we should have user_type, store_id, and OFC user_id now.
     next();
 });

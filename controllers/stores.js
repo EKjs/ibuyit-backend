@@ -16,7 +16,7 @@ export const getOneStore = asyncHandler(async (req, res) => {
   const storeId = parseInt(req.params.id);
   if (!Number.isInteger(storeId))
     throw new ErrorResponse("Bad request", 400);
-  const runQuery = `SELECT s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, s.description, s.photo, s.coords 
+  const runQuery = `SELECT s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, s.description, s.photo, s.coords, s.city_id AS "cityId"  
   FROM stores AS s
   JOIN users AS u ON s.admin_id=u.id 
   WHERE s.id=$1`;
@@ -32,9 +32,11 @@ export const createStore = asyncHandler(async (req, res) => {
   if (userStoreId)throw new ErrorResponse('User already has a store', 400);
   const { error } = validateWithJoi(req.body, "createStore");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
-  const { title, address, description, photo, coords } = req.body;
-  const runQuery = `INSERT INTO stores (title, admin_id, address, description, photo, coords) VALUES ($1,$2,$3,$4,$5,$6) RETURNING title, admin_id AS "adminId", address, description, photo, coords`;
-  const { rows } = await pool.query(runQuery, [title, userId, address, description, photo, coords]);
+  const { title, address, description, photo, coords,cityId } = req.body;
+  const runQuery = `INSERT INTO stores (title, admin_id, address, description, photo, coords,city_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, title, admin_id AS "adminId", address, description, photo, coords, city_id AS "cityId";`;
+  const { rows } = await pool.query(runQuery, [title, userId, address, description, photo, coords,cityId]);
+  const updateUser = await pool.query(`UPDATE ONLY users SET store_id=$1 WHERE id=$2 RETURNING id, store_id AS "storeId";`,[rows[0].id,userId]);
+  console.log(updateUser.rows);
   console.log(rows[0]);
   res.status(201).json(rows[0]);
 });
@@ -46,11 +48,11 @@ export const updateStore = asyncHandler(async (req, res) => {
   const storeId = parseInt(req.params.id);
   if (!Number.isInteger(storeId))
     throw new ErrorResponse("Bad request", 400);
-  const { title, address, description, photo, coords } = req.body;
+  const { title, address, description, photo, coords,cityId } = req.body;
   const runQuery =
-    `UPDATE ONLY stores SET title=$1, address=$3, description=$4, photo=$5, coords=$6 WHERE id=$7 AND admin_id=$2 RETURNING title, admin_id AS "adminId", address, description, photo, coords`;
+    `UPDATE ONLY stores SET title=$1, address=$3, description=$4, photo=$5, coords=$6, city_id=$7 WHERE id=$8 AND admin_id=$2 RETURNING title, admin_id AS "adminId", address, description, photo, coords, city_id AS "cityId";`;
     //updates only WHERE  admin_id=token.userId
-  const { rows } = await pool.query(runQuery, [title, userId, address, description, photo, coords, storeId]);
+  const { rows } = await pool.query(runQuery, [title, userId, address, description, photo, coords,cityId, storeId]);
   res.status(200).json(rows[0]);
 });
 

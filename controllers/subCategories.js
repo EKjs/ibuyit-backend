@@ -41,7 +41,7 @@ export const updateSubCategory = asyncHandler(async (req, res) => {
     throw new ErrorResponse("Bad request", 400);
   const { parentId, subCategory } = req.body;
   const runQuery =
-    "UPDATE ONLY subcategories SET parent_id=$1 description=$2 WHERE id=$3 RETURNING *";
+    "UPDATE ONLY subcategories SET parent_id=$1, description=$2 WHERE id=$3 RETURNING *";
   const { rows } = await pool.query(runQuery, [parentId, subCategory, subCategoryId]);
   res.status(200).json(rows[0]);
 });

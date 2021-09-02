@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config.js';
-// import { dirname, join } from 'path';
-// import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 import errorHandler from './middlewares/errorHandler.js'; //custom error handling
 
@@ -21,12 +21,15 @@ import userRatingsRouter from './routes/userRatingsRouter.js';
 import userRouter from './routes/userRouter.js';
 import userTypeRouter from './routes/userTypeRouter.js';
 import searchRouter from './routes/searchRouter.js';
+import imgUploadRouter from './routes/imgUploadRouter.js';
 
 const app=express();
 const port = process.env.PORT || 3000;
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+app.use(express.static(join(__dirname, 'public')));
 
 if (process.env.NODE_ENV !== 'production') {
     const morgan = await import('morgan');
@@ -36,6 +39,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(cors({origin: process.env.CORS_ORIGIN}));
 
 app.use(express.json());
+// app.use(express.static(join(__dirname, 'public')));
 
 app.use('/users',userRouter);
 app.use('/rate',userRatingsRouter);
@@ -51,7 +55,7 @@ app.use('/categories',categoryRouter);
 app.use('/subcategories',subCategoryRouter);
 app.use('/usertypes',userTypeRouter);
 app.use('/search',searchRouter);
-
+app.use('/image-upload',imgUploadRouter);
 
 app.all('*',(req,res)=>res.status(404).json({error:'Not found'}));
 app.use(errorHandler);

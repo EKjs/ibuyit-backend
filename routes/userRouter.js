@@ -6,7 +6,7 @@ const userRouter = Router();
 
 userRouter.post('/signin',signIn);
 userRouter.get('/', verifyUser, getAllUsers); //?skip=0&limit=10
-userRouter.get('/:id', getOneUser);
+userRouter.get('/:id',verifyUser, getOneUser);
 //TODO ! userRouter.get('/:id/ads', getUsersAds);
 userRouter.post('/', createUser); 
 userRouter.put('/:id', verifyUser, updateUser);

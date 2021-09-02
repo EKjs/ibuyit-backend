@@ -3,15 +3,16 @@ import validateWithJoi from "../utils/validationSchemas.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
 
+const defaultSelectQuery=`SELECT 
+m.id, m.from_user_id AS "fromId", m.to_user_id AS "toId", m.msg_title AS "msgTitle", m.msg_read_flag AS "msgRead", m.ad_id AS "adId",
+u1.name AS "fromUserName", u2.name AS "toUserName" 
+FROM messages AS m
+JOIN users AS u1 ON m.from_user_id=u1.id
+JOIN users AS u2 ON m.to_user_id=u2.id `;
+
 export const getAllMessages = asyncHandler(async (req, res) => {
   if(req.user.userType!==999)throw new ErrorResponse("You don't have permissions!", 400); //only admin allowed to updateMessage
-  const runQuery = `SELECT 
-  m.id, m.from_user_id AS "fromId", m.to_user_id AS "toId", m.msg_title AS "msgTitle", m.msg_text AS "msgText", m.ad_id AS "adId",
-  u1.name AS "fromUserName", u2.name AS "toUserName" 
-  FROM messages AS m
-  JOIN users AS u1 ON m.from_user_id=u1.id
-  JOIN users AS u2 ON m.to_user_id=u2.id
-  ORDER BY m.id`;
+  const runQuery = defaultSelectQuery+` ORDER BY m.id`;
   const {rows} = await pool.query(runQuery);
   res.status(200).json(rows);
 });
@@ -22,29 +23,33 @@ export const getOneMessage = asyncHandler(async (req, res) => { //only reciever 
     throw new ErrorResponse("Bad request", 400);
   const userId = req.user.userId; //my userId
 
-  const runQuery = `SELECT 
-  m.id, m.from_user_id AS "fromId", m.to_user_id AS "toId", m.msg_title AS "msgTitle", m.msg_text AS "msgText", m.ad_id AS "adId",
-  u1.name AS "fromUserName", u2.name AS "toUserName" 
-  FROM messages AS m
-  JOIN users AS u1 ON m.from_user_id=u1.id
-  JOIN users AS u2 ON m.to_user_id=u2.id
-  WHERE m.id=$1 AND m.to_user_id=$2`;
+  const runQuery = defaultSelectQuery+` WHERE m.id=$1 AND m.to_user_id=$2`;
 
   const { rowCount, rows } = await pool.query(runQuery, [messageId,userId]);
   if (rowCount === 0) throw new ErrorResponse("Id not found", 404);
+  if (!rows[0].msgRead){
+    console.log(rows[0]);
+    const runQuery2 = "UPDATE ONLY messages SET msg_read_flag=TRUE WHERE id=$1 RETURNING *";
+    await pool.query(runQuery2, [messageId]);
+  }
   res.status(200).json(rows[0]);
 });
+
+export const markMessageAsRead = asyncHandler(async (req, res) => { //only reciever can get it.
+  const messageId = parseInt(req.params.id);
+  if (!Number.isInteger(messageId))
+    throw new ErrorResponse("Bad request", 400);
+  const userId = req.user.userId; //my userId
+  const runQuery2 = "UPDATE ONLY messages SET msg_read_flag=TRUE WHERE id=$1 AND to_user_id=$2 RETURNING *";
+  const { rows } = await pool.query(runQuery2, [messageId,userId]);
+  res.status(200).json(rows[0]);
+});
+
 
 export const getAllRecievedMessagesOfUser = asyncHandler(async (req, res) => { //only reciever can get it.
   const userId = req.user.userId; //my userId
 
-  const runQuery = `SELECT 
-  m.id, m.from_user_id AS "fromId", m.to_user_id AS "toId", m.msg_title AS "msgTitle", m.msg_text AS "msgText", m.ad_id AS "adId",
-  u1.name AS "fromUserName", u2.name AS "toUserName" 
-  FROM messages AS m
-  JOIN users AS u1 ON m.from_user_id=u1.id
-  JOIN users AS u2 ON m.to_user_id=u2.id
-  WHERE m.to_user_id=$1`;
+  const runQuery = defaultSelectQuery+` WHERE m.to_user_id=$1`;
 
   const { rows } = await pool.query(runQuery, [userId]);
   res.status(200).json(rows);
@@ -53,13 +58,7 @@ export const getAllRecievedMessagesOfUser = asyncHandler(async (req, res) => { /
 export const getAllSentMessagesOfUser = asyncHandler(async (req, res) => { //only reciever can get it.
   const userId = req.user.userId; //my userId
 
-  const runQuery = `SELECT 
-  m.id, m.from_user_id AS "fromId", m.to_user_id AS "toId", m.msg_title AS "msgTitle", m.msg_text AS "msgText", m.ad_id AS "adId",
-  u1.name AS "fromUserName", u2.name AS "toUserName" 
-  FROM messages AS m
-  JOIN users AS u1 ON m.from_user_id=u1.id
-  JOIN users AS u2 ON m.to_user_id=u2.id
-  WHERE m.from_user_id=$1`;
+  const runQuery = defaultSelectQuery+`WHERE m.from_user_id=$1`;
 
   const { rows } = await pool.query(runQuery, [userId]);
   res.status(200).json(rows);

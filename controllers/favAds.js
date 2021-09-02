@@ -41,17 +41,17 @@ export const getFavAdsOfUser = asyncHandler(async (req, res) => {
 
   const { rowCount, rows } = await pool.query(runQuery, [userId]);
   if (rowCount === 0) throw new ErrorResponse("No FAVs found", 404);
-  res.status(200).json(rows[0]);
+  res.status(200).json(rows);
 });
 
 export const addFavAd = asyncHandler(async (req, res) => {
-    const userId = req.user.userId; //my userId
+  const userId = req.user.userId; //my userId
 
   const { error } = validateWithJoi(req.body, "addFavAd");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
 
   const { favAdId,description } = req.body;
-  const runQuery = `INSERT INTO favads (user_id,ad_id,description) VALUES ($1,$2,$3) RETURNING id`;
+  const runQuery = `INSERT INTO favad (user_id,ad_id,description) VALUES ($1,$2,$3) RETURNING id`;
   const { rows } = await pool.query(runQuery, [userId,favAdId,description]);
   console.log(rows[0]);
   res.status(201).json(rows[0]);
