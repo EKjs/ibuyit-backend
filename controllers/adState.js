@@ -2,6 +2,7 @@ import pool from "../db/pgPool.js";
 import validateWithJoi from "../utils/validationSchemas.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import ErrorResponse from "../utils/ErrorResponse.js";
+import {sendEmails} from '../utils/EmailSender.js';
 
 export const getAllAdStates = asyncHandler(async (req, res) => {
   const runQuery = `SELECT * FROM adstatetype ORDER BY id`;
@@ -65,18 +66,26 @@ export const updateStateOfUsersAdById = asyncHandler(async (req, res) => {
 
   const runQuery=`UPDATE ONLY ads 
   SET current_state=$1 
-  WHERE id=$2 AND owner_id=$3 RETURNING id`;
+  WHERE id=$2 AND owner_id=$3 RETURNING id, title`;
   const { rows } = await pool.query(runQuery,[adNewStateId,adId,ownerId]);
   if (rows[0].id===adId){//if state was successfully changed
+    const adTitle = rows[0].title;
     if (adNewStateId===1){//add more checks later, for now just checking id the new state is 'avalible'
       const userList = await getAllUsersFavdThisAd(adId);
       if (userList.length<1)return res.status(200).json('ok');
-
       const msgTitle = `AD #${adId} - ${userList[0].adTitle} is now avalible.`;
       //const msgText = `Status of AD# ${adId} is now [Avalible]`;
       const mulitpleMessages = userList.map(user=>`(${ownerId},${user.userId},'${msgTitle}',${adId})`).join(',');
       const newMessageQuery = `INSERT INTO messages (from_user_id,to_user_id,msg_title,ad_id) VALUES ${mulitpleMessages};`;
       const { rows } = await pool.query(newMessageQuery);
+
+      const emailList = userList.map(usr=>usr.email).join(',');
+      const { protocol } = req;
+      const host = req.get('host'); 
+      const adURL = `https://ibuyit.me/#/view/${adId}`; //`${protocol}://${host}/view/${adId}`;
+      const emailMessage = `Hooray! Hooray! ${adTitle} is now available to buy! <a href="${adURL}">Click here</a> to get to the article's page on <a href="http://ibuyit.me/">ibuyit.me</a> `;//for now
+      sendEmails(emailList,emailMessage);
+      //app.get('/sendmessages',sendEmails);
       //res.status(200).json(rows[0]);
     }
   }
@@ -86,9 +95,10 @@ export const updateStateOfUsersAdById = asyncHandler(async (req, res) => {
 });
 
 const getAllUsersFavdThisAd =async (adId) => {
-  const runQuery = `SELECT fa.user_id AS "userId", ads.title AS "adTitle"  
+  const runQuery = `SELECT fa.user_id AS "userId", ads.title AS "adTitle", u.email, u.name AS "userName" 
   FROM favad AS fa 
   JOIN ads ON fa.ad_id=ads.id 
+  LEFT JOIN users as u ON fa.user_id=u.id 
   WHERE fa.ad_id=$1`;
   const { rows } = await pool.query(runQuery,[adId]);
   console.log(rows);

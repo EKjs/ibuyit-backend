@@ -41,7 +41,7 @@ export const getFavUsersOfUser = asyncHandler(async (req, res) => {
 
   const { rowCount, rows } = await pool.query(runQuery, [userId]);
   if (rowCount === 0) throw new ErrorResponse("No FAVs found", 404);
-  res.status(200).json(rows[0]);
+  res.status(200).json(rows);
 });
 
 export const addFavUser = asyncHandler(async (req, res) => {

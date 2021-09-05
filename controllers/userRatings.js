@@ -34,12 +34,13 @@ export const getAvgRatingOfUser = asyncHandler(async (req, res) => {
 
 export const createUserRating = asyncHandler(async (req, res) => {
   const userId = req.user.userId; //GET my id FROM TOKEN!!!
-  if (!Number.isInteger(userId))
-    throw new ErrorResponse("Bad request", 400);
+  /* if (!Number.isInteger(userId))
+    throw new ErrorResponse("Bad request", 400); */
   const { error } = validateWithJoi(req.body, "createUserRating");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
   const { targetUser,rating } = req.body;
-  const runQuery = "INSERT INTO ratings (user_id,target_user_id,rated) VALUES ($1,$2,$3) RETURNING *";
+  if (targetUser===userId)throw new ErrorResponse('You shouldnt rate yourself', 400);
+  const runQuery = `INSERT INTO ratings (user_id,target_user_id,rated) VALUES ($1,$2,$3) RETURNING user_id AS "userId", target_user_id AS "targetUser", rated;`;
   const { rows } = await pool.query(runQuery, [userId,targetUser,rating]);
   console.log(rows[0]);
   res.status(201).json(rows[0]);

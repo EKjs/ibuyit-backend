@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllAds, getNewAds, getAdsByUserId, getOneAd, createAd, updateAd, deleteAd,getAdsByCatId,getAdsBySubCatId,getAdsByCityId } from '../controllers/ads.js';
+import { getAllAds, getNewAds, getAdsByStoreId, getAdsByUserId, getOneAd, createAd, updateAd, deleteAd,getAdsByCatId,getAdsBySubCatId,getAdsByCityId } from '../controllers/ads.js';
 import verifyUser from "../middlewares/verifyUser.js";
 
 const adsRouter = Router();
@@ -11,6 +11,7 @@ adsRouter.get('/byuser/:userId', getAdsByUserId);
 adsRouter.get('/bycategory/:catId', getAdsByCatId);
 adsRouter.get('/bysubcategory/:subCatId', getAdsBySubCatId);
 adsRouter.get('/bycity/:cityId', getAdsByCityId);
+adsRouter.get('/bystore/:storeId', getAdsByStoreId);
 
 
 adsRouter.get('/:id', getOneAd);

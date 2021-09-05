@@ -62,7 +62,7 @@ const getCitiesInRadius = async (lat,lon,radius) => {
   return closeCitiesIds
 };
 
-const distance = (lat1, lon1, lat2, lon2) => {
+export const distance = (lat1, lon1, lat2, lon2) => {
   //thnx to Salvador Dali https://coderoad.ru/365826/Вычислите-расстояние-между-координатами-2-GPS#34486089
   const p = 0.017453292519943295;    // Math.PI / 180
   const c = Math.cos;

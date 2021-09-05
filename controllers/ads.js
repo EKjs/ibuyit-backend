@@ -5,21 +5,18 @@ import ErrorResponse from '../utils/ErrorResponse.js';
 //import {moveFilesToImagesFolder} from './processImageFiles.js';
 
 
-export const universalSearch = asyncHandler(async (req, res) => {
-  
-});
-
 export const selectForMultipleAds = `SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
 ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
 ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
 u.name AS "userName",u.was_online AS "wasOnline", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subCategory", 
-cat.id as "catId", cat.description as "category", u.phone AS "userPhone", 
+cat.id as "catId", cat.description as "category", u.phone AS "userPhone", ut.id AS "userTypeId", ut.type_description AS "userType", 
 count(*) OVER() AS "totalRows" 
 FROM ads 
 JOIN cities ON ads.city_id=cities.id 
 JOIN users AS u ON ads.owner_id=u.id 
 JOIN subcategories AS sc ON ads.subcategory_id=sc.id 
 JOIN categories AS cat ON sc.parent_id=cat.id 
+JOIN usertypes AS ut ON u.user_type=ut.id 
 LEFT JOIN stores AS s ON u.store_id=s.id `;
 
 export const getAdsBySubCatId = asyncHandler(async (req, res) => {
@@ -88,6 +85,31 @@ export const getAdsByCatId = asyncHandler(async (req, res) => {
   if (limit>0)runQuery+=` LIMIT ${limit}`;
   if (skip>0)runQuery+=` OFFSET ${skip}`;
   const { rows } = await pool.query(runQuery,[catId]);
+  //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
+  //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
+  res.status(200).json(rows);
+});
+
+export const getAdsByStoreId = asyncHandler(async (req, res) => {
+  const storeId = parseInt(req.params.storeId,10);
+  
+  if (!Number.isInteger(storeId))throw new ErrorResponse('Bad request',400);
+
+  const skip = req.query.skip ? parseInt(req.query.skip,10) : 0;
+  const limit = req.query.limit ? parseInt(req.query.limit,10) : 0;
+  
+  //Check for bad LIMIT or SKIP values
+  if (!Number.isInteger(skip))throw new ErrorResponse('Bad skip value',400)
+  else if (!Number.isInteger(limit))throw new ErrorResponse('Bad limit value',400);
+
+  //const totalRows = await pool.query(`SELECT COUNT(*) FROM ads`);
+
+  let runQuery=`${selectForMultipleAds} 
+  WHERE ads.store_id=$1 
+  ORDER BY ads.created DESC`;
+  if (limit>0)runQuery+=` LIMIT ${limit}`;
+  if (skip>0)runQuery+=` OFFSET ${skip}`;
+  const { rows } = await pool.query(runQuery,[storeId]);
   //const { rowCount: total, rows: allItems } = await pool.query(runQuery);
   //const items = skip===0 && limit===0 ? allItems : limit===0 ? allItems.splice(skip) : allItems.splice(skip,limit);
   res.status(200).json(rows);
@@ -186,7 +208,8 @@ export const getAllAds = asyncHandler(async (req, res) => {
     if (error)throw new ErrorResponse(error.details[0].message,400);
     
     
-    const {sellAsStore,subCategoryId,title,description,price,photos,cityId,address,coords,currentState}=req.body; 
+    const {sellAsStore,subCategoryId,title,description,price,photos,cityId,address,coords,currentState,userId}=req.body; 
+    if (userId!==ownerId)throw new ErrorResponse('You are someone else...',400);
     //moveFilesToImagesFolder(photos);
     console.log('sellAsStore',sellAsStore);
     const storeId = sellAsStore ? userStoreId : null;
@@ -204,12 +227,20 @@ export const getAllAds = asyncHandler(async (req, res) => {
     //if (rowCount===0)throw new ErrorResponse('ID not found',404);
     //const creationDateTime = curAdData[0].created;
     //const views = curAdData[0].views;
-    const {userId:ownerId,userStoreId} = req.user;//add check for store id req.user.storeId
+    const {userId:tempOwnerId,userStoreId:tempStoreId} = req.user;//add check for store id req.user.storeId
     const defaultAdModerateStateOnUpdate = 2;
     const {error} = validateWithJoi(req.body,'createAd');
     if (error)throw new ErrorResponse(error.details[0].message,400);
     
-    const {sellAsStore,subCategoryId,title,description,price,photos,cityId,address,coords,currentState}=req.body; 
+    const {sellAsStore,subCategoryId,title,description,price,photos,cityId,address,coords,currentState,userId}=req.body;
+    let ownerId=tempOwnerId;
+    let userStoreId=tempStoreId;
+    if(req.user.userType===999){
+      ownerId=userId;
+      const usrStoreIdQuery = `SELECT store_id AS "storeId" FROM users WHERE id=$1`;
+      const {rows} = await pool.query(usrStoreIdQuery,[ownerId]);
+      userStoreId=rows[0].storeId;
+    }
     const storeId = sellAsStore ? userStoreId : null;
     console.log('sellAsStore',sellAsStore,userStoreId,storeId);
     const runQuery=`UPDATE ONLY ads 

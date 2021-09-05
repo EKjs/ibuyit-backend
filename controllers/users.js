@@ -22,7 +22,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
   console.log(counter); */
   if(req.user.userType!==999)throw new ErrorResponse("You don't have permissions!", 400); //only admin allowed to get all users
-  const runQuery = `SELECT u.name,u.email,u.phone,u.register_date AS "registerDate",u.was_online AS "wasOnline",u.user_type AS "userTypeId",u.store_id AS "storeId",
+  const runQuery = `SELECT u.id, u.name,u.email,u.phone,u.register_date AS "registerDate",u.was_online AS "wasOnline",u.user_type AS "userTypeId",u.store_id AS "storeId",
   s.title AS "storeTitle", ut.type_description AS "userType" , count(*) OVER() AS full_count
   FROM users AS u 
   JOIN usertypes AS ut ON u.user_type=ut.id 
@@ -37,7 +37,7 @@ export const getOneUser = asyncHandler(async (req, res) => {
   if (!Number.isInteger(userId))
     throw new ErrorResponse("Bad request", 400);
   const runQuery = `SELECT 
-  u.name,u.email,u.phone,u.register_date AS "registerDate",u.was_online AS "wasOnline",u.user_type AS "userTypeId",u.store_id AS "storeId",
+  u.id as "userId", u.name,u.email,u.phone,u.register_date AS "registerDate",u.was_online AS "wasOnline",u.user_type AS "userTypeId",u.store_id AS "storeId",
   s.title AS "storeTitle", ut.type_description AS "userType" 
   FROM users AS u 
   JOIN usertypes AS ut ON u.user_type=ut.id 
@@ -82,25 +82,41 @@ export const createUser = asyncHandler(async (req,res)=>{ //user registration
 
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const { error } = validateWithJoi(req.body, "updateUserNoPassword");
-  if (error) throw new ErrorResponse(error.details[0].message, 400);
-  const userId = parseInt(req.params.id);
-  if (!Number.isInteger(userId))
-    throw new ErrorResponse("Bad request", 400);
+  if(req.user.userType!==999){
+      const { error } = validateWithJoi(req.body, "updateUserNoPassword");
+      if (error) throw new ErrorResponse(error.details[0].message, 400);
+      const userId = parseInt(req.params.id);
+      if (!Number.isInteger(userId))
+        throw new ErrorResponse("Bad request", 400);
 
-  if(req.user.userId!==userId){
-    if(req.user.userType!==999){
-      throw new ErrorResponse("You don't have permissions!", 400);
+      if(req.user.userId!==userId){
+        if(req.user.userType!==999){
+          throw new ErrorResponse("You don't have permissions!", 400);
+        }
+      }
+      //only admin allowed to update other users or user can update himself
+      const { userName, email, password, phone, storeId } = req.body;
+      //const pwdHash = await bcrypt.hash(password,10);
+      const runQuery =
+        `UPDATE ONLY users SET name=$1, email=$2, phone=$3 WHERE id=$4 
+        RETURNING id,name AS "userName", email, user_type AS "userType";`;
+      const { rows } = await pool.query(runQuery, [userName, email, phone, userId]);
+      return res.status(200).json(rows[0]);
     }
-  }
-  //only admin allowed to update other users or user can update himself
-  const { userName, email, password, phone, storeId } = req.body;
-  //const pwdHash = await bcrypt.hash(password,10);
-  const runQuery =
-    `UPDATE ONLY users SET name=$1, email=$2, phone=$3 WHERE id=$4 
-    RETURNING id,name AS "userName", email, user_type AS "userType";`;
-  const { rows } = await pool.query(runQuery, [userName, email, phone, userId]);
-  res.status(200).json(rows[0]);
+    const { error } = validateWithJoi(req.body, "adminUpdateUser");
+    if (error) throw new ErrorResponse(error.details[0].message, 400);
+    const userId = parseInt(req.params.id);
+    if (!Number.isInteger(userId))
+      throw new ErrorResponse("Bad request", 400);
+
+    //only admin allowed to update other users or user can update himself
+    const { userName, email, phone, userType } = req.body;
+    //const pwdHash = await bcrypt.hash(password,10);
+    const runQuery =
+      `UPDATE ONLY users SET name=$1, email=$2, phone=$3, user_type=$4 WHERE id=$5 
+      RETURNING id,name AS "userName", email, user_type AS "userType";`;
+    const { rows } = await pool.query(runQuery, [userName, email, phone, userType, userId]);
+    res.status(200).json(rows[0]);
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {

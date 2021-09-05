@@ -38,6 +38,7 @@ const validateWithJoi = (reqData,reqType)=>{
 
       case "createUserType":
         schema = {
+          userTypeId:Joi.number().required(),
             userType: Joi.string().min(1).required(),
         };
         break;
@@ -82,6 +83,15 @@ const validateWithJoi = (reqData,reqType)=>{
               phone: Joi.string().allow(null, ''),
           };
           break;
+          case "adminUpdateUser":
+            schema = {
+                userName: Joi.string().min(4).required(),
+                email: Joi.string().min(2).required().email(),
+                phone: Joi.string().allow(null, ''),
+                userType:Joi.number().required(),
+            };
+            break;
+          
       case "createAd":
         schema = {
             sellAsStore: Joi.boolean(),   //now getting from req.user
@@ -94,6 +104,7 @@ const validateWithJoi = (reqData,reqType)=>{
             address: Joi.string().allow(''),
             coords: Joi.array(),
             currentState:Joi.number(),
+            userId:Joi.number().required(),
         };
         break;
 
@@ -119,7 +130,13 @@ const validateWithJoi = (reqData,reqType)=>{
         };
         break;
 
-
+        
+        case "storesOnMap":
+          schema = {
+            coords: Joi.array().required(),
+            radius: Joi.number().required(),
+          };
+          break;
       case "updateSubCategory":
         schema = {
           subCategoryName: Joi.string().min(2).required(),
