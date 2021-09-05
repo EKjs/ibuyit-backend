@@ -59,6 +59,7 @@ const validateWithJoi = (reqData,reqType)=>{
             photo: Joi.string(),
             coords: Joi.array(),
             cityId: Joi.number().required(),
+            ownerId:Joi.number().required(),
         };
         break;
 
