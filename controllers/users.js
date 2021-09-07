@@ -6,7 +6,7 @@ import asyncHandler from '../middlewares/asyncHandler.js';
 import ErrorResponse from '../utils/ErrorResponse.js';
 //import sanitizeHtml from 'sanitize-html';
 
-export const generateToken = (data, secret) => jwt.sign(data, secret, { expiresIn: '3600s' });
+export const generateToken = (data, secret) => jwt.sign(data, secret, { expiresIn: '10d' });
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   

@@ -20,9 +20,11 @@ export const getStoresInRadius = asyncHandler(async (req, res) => {
 });
 
 export const getAllStores = asyncHandler(async (req, res) => {
-  const runQuery = `SELECT s.id, s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, s.description, s.photo, s.coords 
+  const runQuery = `SELECT s.id, s.title, s.admin_id AS "adminId", u.name AS "storeAdmin", s.address, 
+  s.description, s.photo, s.coords, s.city_id AS "cityId", c.name AS "cityName"  
   FROM stores AS s
   JOIN users AS u ON s.admin_id=u.id
+  JOIN cities AS c ON s.city_id=c.id
   ORDER BY s.id`;
   const {rows} = await pool.query(runQuery);
   res.status(200).json(rows);
@@ -72,13 +74,19 @@ export const createStore = asyncHandler(async (req, res) => {
 });
 
 export const updateStore = asyncHandler(async (req, res) => {
-  const userId = req.user.userId; //GET my id FROM TOKEN!!!
+  let userId = req.user.userId; //GET my id FROM TOKEN!!!
   const { error } = validateWithJoi(req.body, "createStore");
   if (error) throw new ErrorResponse(error.details[0].message, 400);
   const storeId = parseInt(req.params.id);
   if (!Number.isInteger(storeId))
     throw new ErrorResponse("Bad request", 400);
-  const { title, address, description, photo, coords,cityId } = req.body;
+  const { title, address, description, photo, coords,cityId,ownerId } = req.body;
+  if(userId!==ownerId){
+    if(req.user.userType!==999){
+      throw new ErrorResponse("You don't have permissions!", 400);
+    }
+    userId=ownerId;
+  }
   const runQuery =
     `UPDATE ONLY stores SET title=$1, address=$3, description=$4, photo=$5, coords=$6, city_id=$7 WHERE id=$8 AND admin_id=$2 RETURNING id, title, admin_id AS "adminId", address, description, photo, coords, city_id AS "cityId";`;
     //updates only WHERE  admin_id=token.userId
