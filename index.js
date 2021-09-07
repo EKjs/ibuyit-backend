@@ -77,7 +77,7 @@ app.all('*',(req,res)=>res.status(404).json({error:'Not found'}));
 
 // socket.onAny((event, ...args) => {
 //     console.log(event, args);
-//   });
+//   }); //test
 
 const connectedUsers = {};
 io.use(verifyUserSocketIO);
