@@ -66,7 +66,7 @@ export const createUser = asyncHandler(async (req,res)=>{ //user registration
   const {userName,email,password,phone} = req.body;
 /*  if (!name || !email || !password) throw new ErrorResponse('Name, email and password are required!',400); */
   const currentDate = new Date(Date.now());
-  const userDefaultTypeOnCreation=0;
+  const userDefaultTypeOnCreation=1;
 
   const {rowCount} = await pool.query(`SELECT * FROM users WHERE email=$1`,[email]);
   if (rowCount>0) throw new ErrorResponse('User already exists',403);

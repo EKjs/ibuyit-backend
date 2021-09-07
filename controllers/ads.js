@@ -199,7 +199,7 @@ export const getAllAds = asyncHandler(async (req, res) => {
     console.log(req.body);
     //todo: add different queries based on category
     //get ownerId from TOKEN
-    const {userId:ownerId,storeId:userStoreId} = req.user;//add check for store id req.user.storeId
+    const {userId:ownerId,userStoreId} = req.user;//add check for store id req.user.storeId
     //const defaultAdStateOnCreation = 1; //1: Available, 2: Reserved, 3: Pre-oders
     const defaultAdModerateStateOnCreation = 2; //1: To be moderated, 2: Accepted, 3: Denied
     const dateTimeAdCreated = new Date(Date.now());
