@@ -7,7 +7,7 @@ import ErrorResponse from '../utils/ErrorResponse.js';
 
 export const selectForMultipleAds = `SELECT ads.id AS "adId", ads.owner_id AS "ownerId", ads.store_id AS "storeId", ads.subcategory_id AS "subCategoryId",
 ads.title, ads.description, ads.created, ads.views, ads.price, ads.photos, ads.city_id AS "cityId", cities.name AS "cityName", 
-ads.address, ads.coords, ads.current_state AS "currentState", ads.moderate_state AS "moderateState", 
+ads.address, ads.coords, ads.current_state AS "currentState", ast.description AS "currentStateDesc", ads.moderate_state AS "moderateState", 
 u.name AS "userName",u.was_online AS "wasOnline", u.store_id AS "userStoreId", s.title AS "storeName", sc.description as "subCategory", 
 cat.id as "catId", cat.description as "category", u.phone AS "userPhone", ut.id AS "userTypeId", ut.type_description AS "userType", 
 count(*) OVER() AS "totalRows" 
@@ -17,6 +17,7 @@ JOIN users AS u ON ads.owner_id=u.id
 JOIN subcategories AS sc ON ads.subcategory_id=sc.id 
 JOIN categories AS cat ON sc.parent_id=cat.id 
 JOIN usertypes AS ut ON u.user_type=ut.id 
+JOIN adstatetype AS ast ON ads.current_state=ast.id 
 LEFT JOIN stores AS s ON u.store_id=s.id `;
 
 export const getAdsBySubCatId = asyncHandler(async (req, res) => {

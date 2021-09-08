@@ -44,10 +44,10 @@ const __dirname = dirname(__filename);
 
 app.use(express.static(join(__dirname, 'public')));
 
-/* if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
     const morgan = await import('morgan');
     app.use(morgan.default('dev'));
-}; */
+};
 
 app.use(cors({origin: process.env.CORS_ORIGIN}));
 
