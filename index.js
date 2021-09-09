@@ -38,7 +38,6 @@ const io = new Server(server,{
       methods: ["GET", "POST"]
     }});
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -52,7 +51,6 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(cors({origin: process.env.CORS_ORIGIN}));
 
 app.use(express.json());
-// app.use(express.static(join(__dirname, 'public')));
 
 app.use('/users',userRouter);
 app.use('/rate',userRatingsRouter);
@@ -73,37 +71,16 @@ app.use('/chats',chatRouter);
 app.use(errorHandler);
 app.all('*',(req,res)=>res.status(404).json({error:'Not found'}));
 
-//app.listen(port,()=>console.log(`Server is listening port ${port}`));
-
-// socket.onAny((event, ...args) => {
-//     console.log(event, args);
-//   }); //test
-
 const connectedUsers = {};
 io.use(verifyUserSocketIO);
 io.on('connection', (socket) => {
-    connectedUsers[socket.id] = socket.userData.userId;
-    console.log('a user connected',socket.userData,socket.id);
+    if (connectedUsers[socket.userData.userId]){
+        return socket.emit('error',"You're already connected!");
+    }
+    connectedUsers[socket.userData.userId] = socket.id;
 
-    //if other sessions of the same user exist:
-    for (let sock of io.of("/").sockets) {
-        if((sock[1].userData.userId===socket.userData.userId) && (sock[0]!==socket.id)){
-           console.log('found sock',sock[0]);
-           console.log(io.sockets.sockets[sock[0]]);
-           //console.log('rooms',sock);
-           //io.sockets[sock[0]].disconnect();
-           console.log('disconnecting',sock[0]);
-        }
-    } 
     socket.on('newChatMessage', async (data) => {
-        //console.log('------------------',io.of("/").sockets);
-        // socket.to(to).emit("private message", {
-        //     content,
-        //     from: socket.id,
-        //   });
-        // const users = [];
         if(socket.userData.userId===data.toUser){
-            console.log("You're trying to send a message to yourself.");
             return socket.emit('error',"You're trying to send a message to yourself.");
         }
         const msgTimeStamp = new Date(Date.now());
@@ -114,42 +91,41 @@ io.on('connection', (socket) => {
             sender:socket.userData.userId,
             msgTimeStamp:msgTimeStamp,
         };
-        for (let socket1 of io.of("/").sockets) {
-            if(socket1[1].userData.userId===data.toUser){
-                console.log('found userId',socket1[1].userData.userId,'=',data.toUser);
-
-                socket.to(socket1[0]).emit("newChatMessage", msg);
-                console.log('USER:',socket1[1].userData.userId,'ID=',socket1[0]);
-                isDelivered=true;
-               // socket.emit("newChatMessage", msg);
-                break;
-            }
-        //   users.push({
-        //     userID: id,
-        //     username: socket,
-        //   });
-        
-        };
+        if(connectedUsers[data.toUser]){
+            socket.to(connectedUsers[data.toUser]).emit("newChatMessage", msg);
+            isDelivered=true;
+        }
         const msgToDB = await createChatMessage(socket.userData.userId,data.toUser,data.message,msgTimeStamp,isDelivered);
-        
         socket.emit("newChatMessage", msg);
-        // socket.emit("users", users);
-
-        // console.log(data.toUser);
-        // console.log('msg:',data.message);
-        //io.to('some room').emit('some event');
     });
+
     socket.on('getMessagesFromOneChat', async (fromUserId) => {
-        console.log('myId=',socket.userData.userId,'secondId',fromUserId);
         const msgList = await getMessagesFromOneChat(socket.userData.userId,fromUserId);
         socket.emit('messagesFromChat',msgList);
-        console.log('user disconnected');
     });
+
     socket.on('disconnect', () => {
-        console.log('user disconnected ',socket.userData.userId);
-        delete connectedUsers[socket.id];
+        delete connectedUsers[socket.userData.userId];
+        socket.broadcast.emit('callEnded')
+    });
+
+    socket.on('callUser', (data) => {
+        if(connectedUsers[data.userToCall]){
+            socket.to(connectedUsers[data.userToCall]).emit("callUser", {signal:data.signalData});
+        }
+    });
+
+    socket.on('answerCall', (data) => {
+        if(connectedUsers[data.userToAnswer]){
+            socket.to(connectedUsers[data.userToAnswer]).emit('callAccepted',data.signal);
+        }
+    });
+
+    socket.on('endCall', (data) => {
+        if(connectedUsers[data.endCallWithUser]){
+            socket.to(connectedUsers[data.endCallWithUser]).emit('endCall',data.endCallWithUser);
+        }
     });
 });
-
   
 server.listen(port)
